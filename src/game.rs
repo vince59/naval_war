@@ -11,6 +11,7 @@ pub struct Ship {
     pub name: &'static str,
     pub size: usize,
     pub number: u8,
+    pub letter: &'static str,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -20,11 +21,11 @@ pub struct Coord {
 }
 
 impl Coord {
-    pub fn new_random()->Self {
+    pub fn new_random() -> Self {
         let mut rng = rand::rng();
         Self {
             col: rng.random_range(0..GRID_SIZE),
-            row: rng.random_range(0..GRID_SIZE)
+            row: rng.random_range(0..GRID_SIZE),
         }
     }
 }
@@ -59,26 +60,31 @@ pub const SHIPS: [Ship; 5] = [
         name: "Carrier",
         size: 5,
         number: 1,
+        letter: "c",
     },
     Ship {
         name: "Battleship",
         size: 4,
         number: 1,
+        letter: "b",
     },
     Ship {
         name: "Cruiser",
         size: 3,
         number: 1,
+        letter: "r",
     },
     Ship {
         name: "Submarine",
         size: 3,
         number: 2,
+        letter: "s",
     },
     Ship {
         name: "Destroyer",
         size: 2,
         number: 2,
+        letter: "d",
     },
 ];
 
@@ -119,7 +125,7 @@ impl Board {
             for cell in row.iter() {
                 let symbol = match cell {
                     Cell::Empty => ".",
-                    Cell::Ship(_) => "S",
+                    Cell::Ship(s) => s.ship.letter,
                     Cell::Hit(_) => "X",
                     Cell::Miss() => "o",
                 };
@@ -136,7 +142,7 @@ impl Board {
             Direction::Horizontal => (0, 1),
             Direction::Vertical => (1, 0),
         };
-    
+
         for i in 0..ship_size {
             let r = row + i * dr;
             let c = col + i * dc;
@@ -155,28 +161,25 @@ impl Board {
         (0..ship_size).all(|i| {
             let r = row + i * dr;
             let c = col + i * dc;
-            r<GRID_SIZE && c<GRID_SIZE && matches!(self.grid[r][c], Cell::Empty)
+            r < GRID_SIZE && c < GRID_SIZE && matches!(self.grid[r][c], Cell::Empty)
         })
     }
 
-    pub fn random_ship(&mut self) {
-
-        for ship in SHIPS.iter()
-        {
-            let mut war_ship = WarShip {
-                ship : *ship,
-                coord: Coord::new_random(),
-                direction: Direction::random(),
-            };
-            while !self.is_place_ship_free(&war_ship) {
-                war_ship.coord=Coord::new_random();
-                war_ship.direction=Direction::random();
-            }
-            self.place_ship(Rc::new(war_ship));
-        }
-    }
-
     pub fn random_placement(&mut self) {
-        self.random_ship();
+        for ship in SHIPS.iter() {
+            for _ in 0..ship.number {
+                let war_ship = loop {
+                    let candidate = WarShip {
+                        ship: *ship,
+                        coord: Coord::new_random(),
+                        direction: Direction::random(),
+                    };
+                    if self.is_place_ship_free(&candidate) {
+                        break candidate;
+                    }
+                };
+                self.place_ship(Rc::new(war_ship));
+            }
+        }
     }
 }
