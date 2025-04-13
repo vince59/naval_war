@@ -20,10 +20,12 @@ pub struct Coord {
 }
 
 impl Coord {
-    pub fn random(&mut self) {
+    pub fn new_random()->Self {
         let mut rng = rand::rng();
-        self.col = rng.random_range(0..GRID_SIZE);
-        self.row = rng.random_range(0..GRID_SIZE);
+        Self {
+            col: rng.random_range(0..GRID_SIZE),
+            row: rng.random_range(0..GRID_SIZE)
+        }
     }
 }
 
@@ -153,17 +155,25 @@ impl Board {
         (0..ship_size).all(|i| {
             let r = row + i * dr;
             let c = col + i * dc;
-            matches!(self.grid[r][c], Cell::Empty)
+            r<GRID_SIZE && c<GRID_SIZE && matches!(self.grid[r][c], Cell::Empty)
         })
     }
 
     pub fn random_ship(&mut self) {
-        let war_ship = Rc::new(WarShip {
-            ship: SHIPS[0],
-            coord: Coord { row: 2, col: 2 },
-            direction: Direction::Horizontal,
-        });
-        self.place_ship(war_ship);
+
+        for ship in SHIPS.iter()
+        {
+            let mut war_ship = WarShip {
+                ship : *ship,
+                coord: Coord::new_random(),
+                direction: Direction::random(),
+            };
+            while !self.is_place_ship_free(&war_ship) {
+                war_ship.coord=Coord::new_random();
+                war_ship.direction=Direction::random();
+            }
+            self.place_ship(Rc::new(war_ship));
+        }
     }
 
     pub fn random_placement(&mut self) {
