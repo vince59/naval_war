@@ -1,6 +1,13 @@
 mod game;
 
 fn main() {
-    let grid = game::create_empty_grid();
-    dbg!(grid);
+    let board = game::Board::new();
+    let (player1, player2) = (
+        game::Player { name: "ordinateur" },
+        game::Player { name: "vincent" },
+    );
+
+    board.random_placement(player1);
+    
+    board.display(&player1);
 }
